@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Station 5 — Widerstreitende Erwartungen</title>
+  <style>
+    :root{ --bg:#0e1117; --card:#12161f; --text:#e6edf3; --muted:#9aa7b2; --chip:#202634; --accent:#1f6f3d; --accent-press:#185833; --shadow:rgba(0,0,0,.35); }
+    html,body{height:100%}
+    body{margin:0; font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; color:var(--text); background:var(--bg)}
+    .container{max-width:920px; margin:0 auto; padding:16px}
+    header{position:sticky; top:0; z-index:5; backdrop-filter:saturate(140%) blur(8px); background: color-mix(in srgb, var(--bg) 80%, transparent); border-bottom:1px solid rgba(255,255,255,.06)}
+    .hero{position:relative; background:linear-gradient(180deg, color-mix(in srgb, var(--card) 90%, transparent) 0%, transparent 100%); border-radius:20px; padding:22px 20px 18px; box-shadow:0 10px 30px var(--shadow) inset}
+    .lang{position:absolute; right:12px; top:12px}
+    .lang button{appearance:none; -webkit-tap-highlight-color:transparent; cursor:pointer; border:1px solid rgba(255,255,255,.08); background:var(--chip); color:#fff; padding:10px 14px; border-radius:999px; font-weight:800; letter-spacing:.5px; box-shadow:0 8px 18px rgba(0,0,0,.25); transition:transform .08s ease, box-shadow .2s ease}
+    .lang button:active{transform:translateY(1px) scale(.98); box-shadow:0 4px 10px rgba(0,0,0,.35)}
+    h1{margin:0; font-weight:900; letter-spacing:.2px; font-size:clamp(22px,4.2vw,34px)}
+    .subtitle{margin-top:6px; color:var(--muted); font-weight:700; font-size:clamp(14px,2.3vw,18px)}
+
+    /* Player */
+    .player{margin:16px 0 6px; background:var(--card); border:1px solid rgba(255,255,255,.06); border-radius:16px; padding:14px; box-shadow:0 8px 24px rgba(0,0,0,.25)}
+    .row{display:flex; align-items:center; gap:12px}
+    .play{appearance:none; border:none; border-radius:999px; width:44px; height:44px; background:var(--accent); color:#fff; font-weight:900; font-size:16px; cursor:pointer; display:grid; place-items:center; box-shadow:0 10px 26px rgba(31,111,61,.35)}
+    .play:active{background:var(--accent-press)}
+    .times{min-width:78px; text-align:right; font-variant-numeric:tabular-nums; color:var(--muted)}
+    .range{flex:1}
+    input[type=range]{width:100%}
+
+    main .text{margin-top:8px; font-size:18px}
+    main .text p{margin:0 0 14px}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <div class="hero">
+        <div class="lang"><button id="langBtn" aria-label="Sprache umschalten">EN</button></div>
+        <h1 id="title">Widerstreitende Erwartungen</h1>
+        <div class="subtitle" id="subtitle">Station 5</div>
+        <div class="player" aria-label="Audio-Player">
+          <div class="row">
+            <button class="play" id="playBtn" aria-label="Abspielen/Pause">▶</button>
+            <div class="range"><input id="seek" type="range" min="0" max="100" value="0" step="1" aria-label="Positionsregler"></div>
+            <div class="times"><span id="cur">0:00</span> / <span id="dur">0:00</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <article class="text" id="body"></article>
+  </main>
+
+  <audio id="audio" preload="none"></audio>
+
+  <script>
+    /* === Общая база аудио (единый банк файлов) === */
+    const AUDIO_BASE = 'https://ausstellungmw.github.io/Frauen-im-geteilten-Deutschland/assets/audio/';
+    const getAudioUrl = (lang, num) => `${AUDIO_BASE}${lang}/${num}.mp3`;
+
+    const i18n = {
+      de: {
+        title: 'Widerstreitende Erwartungen',
+        subtitle: 'Station 5',
+        body: `Gleichberechtigung für Frauen hieß in der DDR vor allem: Arbeiten wie die Männer.
+
+Ab den 1970er-Jahren waren DDR-Frauen fast vollständig ins Arbeitsleben integriert. Sie zogen in der Berufsausbildung mit den Männern gleich – ob in „Männerberufen“ der chemischen Industrie oder als Fernmeldemechanikerin.
+
+In den 1970er-Jahren stellten sie ein Viertel der Schuldirektoren, ein Drittel der Ärzte und jede fünfte Gerichtsvollzieherin. 1989 waren 92 Prozent der Frauen in der DDR erwerbstätig und damit finanziell unabhängig.
+
+Anders im Westen: Dort verdiente bis zur Wiedervereinigung nur knapp die Hälfte der Frauen ihr eigenes Geld. Zum einen wurde ihre Arbeitskraft nicht wie in der DDR benötigt, zum anderen war es gesellschaftlich erwünscht, dass die meisten Frauen nach der Heirat ihren Beruf aufgaben, um sich um Mann, Haushalt und Kinder zu kümmern.
+
+Vor allem die Erwartungen von außen waren in Ost und West unterschiedlich – dabei war die Ausgangslage nach dem Krieg gar nicht so verschieden.`,
+        codeOpp: 'EN',
+        audioNum: 5,
+        ariaPlay:'Abspielen', ariaPause:'Pause'
+      },
+      en: {
+        title: 'Conflicting Expectations',
+        subtitle: 'Station 5',
+        body: `In the GDR, emancipation for women meant, above all, working like men did.
+
+From the 1970s onwards, East German women were almost completely integrated into working life. They caught up with men in vocational training — whether in “male professions” such as the chemical industry or telecommunications engineering.
+
+In the 1970s, they made up a quarter of school principals, a third of doctors, and one in five bailiffs. By 1989, 92 percent of women in the GDR were employed and thus financially independent.
+
+It was a different story in the West: there, until reunification, only about half of all women earned their own income. On the one hand, their labour was not as needed as it was in the GDR; on the other, social convention expected most women to give up their jobs after marriage to take care of their husbands, households, and children.
+
+Above all, external expectations differed between East and West — even though the starting point after the war had not been so different.`,
+        codeOpp: 'DE',
+        audioNum: 5,
+        ariaPlay:'Play', ariaPause:'Pause'
+      }
+    };
+
+    const langKey='station5_lang';
+    let lang = localStorage.getItem(langKey) || 'de';
+
+    const titleEl = document.getElementById('title');
+    const subtitleEl = document.getElementById('subtitle');
+    const bodyEl = document.getElementById('body');
+    const langBtn = document.getElementById('langBtn');
+
+    // Абзацы: двойные переносы = новый абзац; одиночные переносы -> пробел
+    function setBodyText(text){
+      bodyEl.innerHTML = '';
+      text.trim().split(/\n\s*\n/).forEach(p=>{
+        const normalized = p.replace(/\s*\n\s*/g, ' ').trim();
+        const el = document.createElement('p');
+        el.textContent = normalized;
+        bodyEl.appendChild(el);
+      });
+    }
+
+    // Аудио
+    const audio = document.getElementById('audio');
+    const playBtn = document.getElementById('playBtn');
+    const seek = document.getElementById('seek');
+    const cur = document.getElementById('cur');
+    const dur = document.getElementById('dur');
+
+    function toTime(s){ s = Math.max(0, s|0); const m=(s/60)|0, r=(s%60)|0; return `${m}:${r.toString().padStart(2,'0')}` }
+
+    function loadAudio(){
+      const t = i18n[lang];
+      const folder = (lang==='de') ? 'de' : 'en';
+      audio.src = getAudioUrl(folder, t.audioNum); // .../assets/audio/de/5.mp3
+      audio.load();
+      seek.value = 0; seek.max = 100; cur.textContent='0:00'; dur.textContent='0:00';
+      playBtn.textContent='▶'; playBtn.setAttribute('aria-label', t.ariaPlay);
+    }
+
+    function applyLang(){
+      const t = i18n[lang];
+      document.documentElement.lang = lang;
+      titleEl.textContent = t.title;
+      subtitleEl.textContent = t.subtitle;
+      setBodyText(t.body);
+      // на кнопке показываем ПРОТИВОПОЛОЖНЫЙ язык
+      langBtn.textContent = (lang === 'de') ? 'EN' : 'DE';
+      loadAudio();
+    }
+
+    // Тоггл языка
+    langBtn.addEventListener('click', ()=>{
+      lang = (lang==='de') ? 'en' : 'de';
+      localStorage.setItem(langKey, lang);
+      applyLang();
+    });
+
+    // Плейер
+    playBtn.addEventListener('click', ()=>{ if(audio.paused){ audio.play().catch(()=>{}); } else { audio.pause(); } });
+    audio.addEventListener('play', ()=>{ playBtn.textContent='❚❚'; playBtn.setAttribute('aria-label', i18n[lang].ariaPause); });
+    audio.addEventListener('pause', ()=>{ playBtn.textContent='▶'; playBtn.setAttribute('aria-label', i18n[lang].ariaPlay); });
+    audio.addEventListener('loadedmetadata', ()=>{ dur.textContent = toTime(audio.duration||0); });
+    audio.addEventListener('timeupdate', ()=>{ if(audio.duration){ seek.max = Math.floor(audio.duration); seek.value = Math.floor(audio.currentTime); cur.textContent = toTime(audio.currentTime); } });
+    seek.addEventListener('input', ()=>{ if(audio.duration){ audio.currentTime = +seek.value; }});
+
+    applyLang();
+  </script>
+</body>
+</html>
